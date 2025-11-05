@@ -69,6 +69,17 @@ var angle_degrees_not_clockwise: float = 0.0
 		_stick_start_position = Vector2(_joystick_radius + _joystick_border_widht, _joystick_radius + _joystick_border_widht)
 		_stick.position = _stick_start_position
 		queue_redraw()
+##
+@export_range(0.0, 0.5, 0.001, "suffix:length") var joystick_deadzone: float = 0.0
+## Scale of Joystick
+@export_range(0.1, 2.0, 0.001, "suffix:px", "or_greater") var scale_factor: float = 1:
+	set(value):
+		scale_factor = value
+		scale = Vector2(scale_factor, scale_factor)
+		queue_redraw()
+## Turn the joystick on or off.
+@export var active: bool = true
+
 @export_category("Stick")
 ## Stick color.
 @export_color_no_alpha() var stick_color: Color = Color.WHITE:
@@ -82,13 +93,6 @@ var angle_degrees_not_clockwise: float = 0.0
 	set(value):
 		stick_opacity = value
 		_stick.opacity = value
-		queue_redraw()
-@export_category("Area")
-## Scale of Joystick
-@export_range(0.1, 2.0, 0.001, "suffix:px", "or_greater") var scale_factor: float = 1:
-	set(value):
-		scale_factor = value
-		scale = Vector2(scale_factor, scale_factor)
 		queue_redraw()
 #endregion Exports =================================================
 
