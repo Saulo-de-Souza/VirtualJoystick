@@ -3,7 +3,7 @@ class_name VirtualJoystick extends Control
 
 
 #region Signals =================================================
-## Issued when the analog value is changed.
+## Emitted when the analog value is changed.
 signal analogic_changed(value: Vector2, distance: float, angle: float, angle_clockwise: float, angle_not_clockwise: float)
 #endregion Signals ==============================================
 
@@ -29,25 +29,36 @@ var _delta: Vector2 = Vector2.ZERO
 
 
 #region Plubic Propertys ========================================
+## Gets the joystick value. Returns a Vector2.
 var value: Vector2 = Vector2.ZERO
+
+## Gets the distance of the stick from the base of the joystick (length). Returns a float.
 var distance: float = 0.0
+
+## Gets the angle in degrees of the joystick in a clockwise direction. Returns a float.
 var angle_degrees_clockwise: float = 0.0
+
+## Gets the angle in degrees of the joystick in a counter-clockwise direction. Returns a float.
 var angle_degrees_not_clockwise: float = 0.0
 #endregion Plubic Propertys =====================================
 
+
 #region Exports ===================================================
 @export_category("Joystick")
+## Joystick base color.
 @export_color_no_alpha() var joystick_color: Color = Color.WHITE:
 	set(value):
 		joystick_color = value
 		_joystick.color = value
 		_joystick.opacity = joystick_opacity
 		queue_redraw()
+## Opacity of the joystick's base color.
 @export_range(0.0, 1.0, 0.001, "suffix:alpha") var joystick_opacity: float = 0.8:
 	set(value):
 		joystick_opacity = value
 		_joystick.opacity = value
 		queue_redraw()
+## Height of the joystick base edge.
 @export_range(1.0, 20.0, 0.01, "suffix:px", "or_greater") var joystick_border: float = 10:
 	set(value):
 		joystick_border = value
@@ -59,18 +70,21 @@ var angle_degrees_not_clockwise: float = 0.0
 		_stick.position = _stick_start_position
 		queue_redraw()
 @export_category("Stick")
+## Stick color.
 @export_color_no_alpha() var stick_color: Color = Color.WHITE:
 	set(value):
 		stick_color = value
 		_stick.color = value
 		_stick.opacity = stick_opacity
 		queue_redraw()
+## Opacity of the Stick's color.
 @export_range(0.0, 1.0, 0.001, "suffix:alpha") var stick_opacity: float = 0.8:
 	set(value):
 		stick_opacity = value
 		_stick.opacity = value
 		queue_redraw()
 @export_category("Area")
+## Scale of Joystick
 @export_range(0.1, 2.0, 0.001, "suffix:px", "or_greater") var scale_factor: float = 1:
 	set(value):
 		scale_factor = value
@@ -174,22 +188,27 @@ func _get_value_delta(delta: Vector2) -> Vector2:
 
 
 #region Public Methods =============================================
+## Gets the joystick value. Returns a Vector2.
 func get_value() -> Vector2:
 	return value
 
 
+## Gets the angle in degrees of the joystick in a clockwise direction. Returns a float.
 func get_angle_degrees_clockwise() -> float:
 	return angle_degrees_clockwise
 
 
+## Gets the angle in degrees of the joystick in a counter-clockwise direction. Returns a float.
 func get_angle_degrees_not_clockwise() -> float:
 	return angle_degrees_not_clockwise
 
 
+## Gets the angle in degrees of the joystick. Returns a float.
 func get_angle_degress(continuos: bool = true, clockwise: bool = false) -> float:
 	return _get_angle_delta(_delta, continuos, clockwise)
 
 
+## Gets the distance of the stick from the base of the joystick (length). Returns a float.
 func get_distance() -> float:
 	return distance
 
