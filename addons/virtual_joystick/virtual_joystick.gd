@@ -82,11 +82,12 @@ var angle_degrees_not_clockwise: float = 0.0
 @export_range(1.0, 20.0, 0.01, "suffix:px", "or_greater") var joystick_border: float = 10.0:
 	set(value):
 		joystick_border = value
-		if _joystick:
-			_joystick.width = value
+		_joystick.width = value
 		_joystick_border_width = value
-		_joystick_start_position = Vector2(_joystick_radius + value, _joystick_radius + value)
-		_stick_start_position = _joystick_start_position
+		_joystick_start_position = Vector2(_joystick_radius + _joystick_border_width, _joystick_radius + _joystick_border_width)
+		_joystick.position = _joystick_start_position
+		_stick_start_position = Vector2(_joystick_radius + _joystick_border_width, _joystick_radius + _joystick_border_width)
+		_stick.position = _stick_start_position
 		queue_redraw()
 
 ## Deadzone threshold (0.0 = off, 1.0 = full range).
