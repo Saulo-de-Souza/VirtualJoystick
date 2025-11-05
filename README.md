@@ -1,22 +1,22 @@
-# 🎮 VirtualJoystick for Godot
+# Virtual Joystick for Godot
 
 **VirtualJoystick** is a lightweight and fully customizable on-screen joystick plugin for **Godot Engine 4.5+**.  
 Designed for mobile and touchscreen games, it provides smooth analog input handling, complete deadzone control, and responsive signals for precise player movement.
 
 ---
 
-## 🚀 Features
+## Features
 
-- ✅ Clean and modern UI with customizable colors, opacity, and scaling.
-- 🎯 Linear **deadzone** adjustment for natural analog feel.
-- 📐 Provides normalized direction vector, distance, and multiple angle formats.
-- ⚡ Emits `analogic_changed`, `deadzone_enter`, and `deadzone_leave` signals.
-- 🧩 Plug-and-play integration with minimal setup required.
-- 🕹️ Works seamlessly with both `Control`-based and 3D input systems.
+- Clean and modern UI with customizable colors, opacity, and scaling.
+- Linear **deadzone** adjustment for natural analog feel.
+- Provides normalized direction vector, distance, and multiple angle formats.
+- Emits `analogic_changed`, `deadzone_enter`, and `deadzone_leave` signals.
+- Plug-and-play integration with minimal setup required.
+- Works seamlessly with both `Control`-based and 3D input systems.
 
 ---
 
-## 📦 Installation
+## Installation
 
 1. Copy the plugin folder to your Godot project's `addons/` directory:
 
@@ -29,7 +29,7 @@ Designed for mobile and touchscreen games, it provides smooth analog input handl
 
 ---
 
-## 🧠 How to Use
+## How to Use
 
 1. Add a **VirtualJoystick** node to your scene.
 2. Connect the `analogic_changed` signal to your player or camera controller.
@@ -58,7 +58,7 @@ Designed for mobile and touchscreen games, it provides smooth analog input handl
 
 ---
 
-## 🧩 Signals
+## Signals
 
 | Signal                                                                           | Description                                            |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -68,7 +68,7 @@ Designed for mobile and touchscreen games, it provides smooth analog input handl
 
 ---
 
-## 🧮 Methods
+## Methods
 
 | Method                                     | Returns   | Description                                 |
 | ------------------------------------------ | --------- | ------------------------------------------- |
@@ -80,7 +80,7 @@ Designed for mobile and touchscreen games, it provides smooth analog input handl
 
 ---
 
-## 🧱 Example Integration
+## Example Integration
 
 ```gdscript
 @onready var joystick: VirtualJoystick = $VirtualJoystick
@@ -93,28 +93,13 @@ func _process(delta):
 
 ---
 
-## 🧑‍💻 Author
-
-Created by **Saulo**  
-📧 Contact: —  
-💙 Inspired by Godot’s open-source spirit.
-
----
-
-## 🪪 License
-
-This plugin is distributed under the **MIT License**.  
-You’re free to use, modify, and distribute it in commercial or personal projects.
-
----
-
 ## Screenshots
 
 **Screenshot InputManager**
 
 ![Screenshot 1](./addons/virtual_joystick/screenshots/1.png)
 
-<video width="640" height="360" controls>
+<video width="auto" height="auto" controls>
   <source src="./addons/virtual_joystick/screenshots/video.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
