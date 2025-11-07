@@ -107,6 +107,15 @@ var angle_degrees_not_clockwise: float = 0.0
 ## Enables or disables the joystick input.
 @export var active: bool = true
 
+## If true, the Joystick will only be displayed on the screen on mobile devices.
+@export var only_mobile: bool = false:
+	set(value):
+		only_mobile = value
+		if only_mobile == true and OS.get_name().to_lower() not in ["android", "ios"]:
+			visible = false
+		else:
+			visible = true
+
 @export_category("Stick")
 ## Stick (thumb) color.
 @export_color_no_alpha() var stick_color: Color = Color.WHITE:
