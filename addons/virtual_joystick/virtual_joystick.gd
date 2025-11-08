@@ -245,14 +245,13 @@ func _update_emit_signals() -> void:
 	if not active:
 		return
 	if _in_deadzone:
-		if _click_in == false:
-			analogic_changed.emit(
-				Vector2.ZERO,
-				0.0,
-				0.0,
-				0.0,
-				0.0
-				)
+		analogic_changed.emit(
+			Vector2.ZERO,
+			0.0,
+			0.0,
+			0.0,
+			0.0
+			)
 	else:
 		analogic_changed.emit(
 		value,
