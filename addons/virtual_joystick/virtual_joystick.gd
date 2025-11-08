@@ -46,8 +46,11 @@ var _in_deadzone: bool = false:
 			else:
 				deadzone_leave.emit()
 
-var real_size: Vector2 = size * scale
-var warnings: PackedStringArray = []
+var _real_size: Vector2 = size * scale
+var _warnings: PackedStringArray = []
+
+var _DEFAULT_JOYSTICK_TEXTURE = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_1.png")
+var _DEFAULT_STICK_TEXTURE = preload("res://addons/virtual_joystick/resources/textures/stick_texture_1.png")
 #endregion Private Properties ====================================
 
 
@@ -96,7 +99,7 @@ var angle_degrees_not_clockwise: float = 0.0
 			
 @export_category("Joystick")
 ## Select a texture for the joystick figure.
-@export var joystick_texture: Texture2D:
+@export var joystick_texture: Texture2D = _DEFAULT_JOYSTICK_TEXTURE:
 	set(value):
 		joystick_texture = value
 		update_configuration_warnings()
@@ -133,7 +136,7 @@ var angle_degrees_not_clockwise: float = 0.0
 
 @export_category("Stick")
 ## Select a texture for the stick figure.
-@export var stick_texture: Texture2D:
+@export var stick_texture: Texture2D = _DEFAULT_STICK_TEXTURE:
 	set(value):
 		stick_texture = value
 		update_configuration_warnings()
@@ -211,10 +214,10 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _get_configuration_warnings() -> PackedStringArray:
-	warnings = []
+	_warnings = []
 	if use_textures and (joystick_texture == null or stick_texture == null):
-		warnings.append("The joystick_texture and stick_texture properties must be set when using use_textures = true.")
-	return warnings
+		_warnings.append("The joystick_texture and stick_texture properties must be set when using use_textures = true.")
+	return _warnings
 	
 #endregion Engine Methods =============================================
 
@@ -315,7 +318,7 @@ func _update_emit_signals() -> void:
 
 
 func _update_real_size() -> void:
-	real_size = size * scale
+	_real_size = size * scale
 	pivot_offset = size / 2
 	
 	
