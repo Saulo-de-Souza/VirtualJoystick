@@ -3,7 +3,7 @@ class_name VirtualJoystick
 extends Control
 
 #region Signals =================================================
-## Emitted whenever the stick moves outside the deadzone.
+## Emitted when the stick is moved.
 signal analogic_changed(
 	value: Vector2,
 	distance: float,
