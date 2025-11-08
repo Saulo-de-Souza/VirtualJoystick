@@ -163,8 +163,8 @@ func _gui_input(event: InputEvent) -> void:
 			_stick.position = _stick_start_position
 			if _click_in:
 				_reset_values()
+				_click_in = false
 				_update_emit_signals()
-			_click_in = false
 
 	elif event is InputEventScreenDrag and _drag_started_inside:
 		_update_stick(event.position)
