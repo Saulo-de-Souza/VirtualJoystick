@@ -102,7 +102,7 @@ var angle_degrees_not_clockwise: float = 0.0
 			visible = true
 			
 @export_category("Joystick")
-## Select a texture for the joystick.
+## Enable the use of textures for the joystick.
 @export var joystick_use_textures: bool = false:
 	set(value):
 		joystick_use_textures = value
@@ -147,7 +147,7 @@ var angle_degrees_not_clockwise: float = 0.0
 
 
 @export_category("Stick")
-## Select a texture for the stick.
+## Enable the use of textures for the stick.
 @export var stick_use_textures: bool = false:
 	set(value):
 		stick_use_textures = value
