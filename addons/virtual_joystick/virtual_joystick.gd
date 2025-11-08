@@ -19,6 +19,7 @@ signal deadzone_enter
 signal deadzone_leave
 #endregion Signals ===============================================
 
+
 #region Private Properties ======================================
 var _joystick: VirtualJoystickCircle
 var _stick: VirtualJoystickCircle
@@ -44,7 +45,11 @@ var _in_deadzone: bool = false:
 				deadzone_enter.emit()
 			else:
 				deadzone_leave.emit()
+
+var real_size: Vector2 = size * scale
+var warnings: PackedStringArray = []
 #endregion Private Properties ====================================
+
 
 #region Public Properties =======================================
 ## Normalized joystick direction vector (X, Y).
@@ -63,8 +68,37 @@ var angle_degrees_clockwise: float = 0.0
 var angle_degrees_not_clockwise: float = 0.0
 #endregion Public Properties =====================================
 
+
 #region Exports ===================================================
+@export var use_textures: bool = false:
+	set(value):
+		use_textures = value
+		update_configuration_warnings()
+		queue_redraw()
+## Global scale factor of the joystick.
+@export_range(0.1, 2.0, 0.001, "suffix:x", "or_greater") var scale_factor: float = 1.0:
+	set(value):
+		scale_factor = value
+		scale = Vector2(value, value)
+		_update_real_size()
+		queue_redraw()
+## Enables or disables the joystick input.
+@export var active: bool = true
+## If true, the Joystick will only be displayed on the screen on mobile devices.
+@export var only_mobile: bool = false:
+	set(value):
+		only_mobile = value
+		if only_mobile == true and OS.get_name().to_lower() not in ["android", "ios"]:
+			visible = false
+		else:
+			visible = true
+			
 @export_category("Joystick")
+@export var joystick_texture: Texture2D:
+	set(value):
+		joystick_texture = value
+		update_configuration_warnings()
+		queue_redraw()
 ## Base color of the joystick background.
 @export_color_no_alpha() var joystick_color: Color = Color.WHITE:
 	set(value):
@@ -73,7 +107,6 @@ var angle_degrees_not_clockwise: float = 0.0
 			_joystick.color = value
 			_joystick.opacity = joystick_opacity
 		queue_redraw()
-
 ## Opacity of the joystick base.
 @export_range(0.0, 1.0, 0.001, "suffix:alpha") var joystick_opacity: float = 0.8:
 	set(value):
@@ -81,7 +114,6 @@ var angle_degrees_not_clockwise: float = 0.0
 		if _joystick:
 			_joystick.opacity = value
 		queue_redraw()
-
 ## Width of the joystick base border.
 @export_range(1.0, 20.0, 0.01, "suffix:px", "or_greater") var joystick_border: float = 10.0:
 	set(value):
@@ -93,30 +125,16 @@ var angle_degrees_not_clockwise: float = 0.0
 		_stick_start_position = Vector2(_joystick_radius + _joystick_border_width, _joystick_radius + _joystick_border_width)
 		_stick.position = _stick_start_position
 		queue_redraw()
-
 ## Deadzone threshold (0.0 = off, 1.0 = full range).
 @export_range(0.0, 0.9, 0.001, "suffix:length") var joystick_deadzone: float = 0.1
 
-## Global scale factor of the joystick.
-@export_range(0.1, 2.0, 0.001, "suffix:x", "or_greater") var scale_factor: float = 1.0:
-	set(value):
-		scale_factor = value
-		scale = Vector2(value, value)
-		queue_redraw()
-
-## Enables or disables the joystick input.
-@export var active: bool = true
-
-## If true, the Joystick will only be displayed on the screen on mobile devices.
-@export var only_mobile: bool = false:
-	set(value):
-		only_mobile = value
-		if only_mobile == true and OS.get_name().to_lower() not in ["android", "ios"]:
-			visible = false
-		else:
-			visible = true
 
 @export_category("Stick")
+@export var stick_texture: Texture2D:
+	set(value):
+		stick_texture = value
+		update_configuration_warnings()
+		queue_redraw()
 ## Stick (thumb) color.
 @export_color_no_alpha() var stick_color: Color = Color.WHITE:
 	set(value):
@@ -125,7 +143,6 @@ var angle_degrees_not_clockwise: float = 0.0
 			_stick.color = value
 			_stick.opacity = stick_opacity
 		queue_redraw()
-
 ## Opacity of the stick.
 @export_range(0.0, 1.0, 0.001, "suffix:alpha") var stick_opacity: float = 0.8:
 	set(value):
@@ -134,6 +151,7 @@ var angle_degrees_not_clockwise: float = 0.0
 			_stick.opacity = value
 		queue_redraw()
 #endregion Exports =================================================
+
 
 #region Engine Methods =============================================
 func _init() -> void:
@@ -144,12 +162,31 @@ func _init() -> void:
 
 func _ready() -> void:
 	set_size(Vector2(_joystick_radius * 2 + _joystick_border_width * 2, _joystick_radius * 2 + _joystick_border_width * 2))
+	_update_real_size()
+
 
 func _draw() -> void:
-	_joystick.draw(self, false)
-	_stick.draw(self, false)
+	if use_textures and joystick_texture and stick_texture:
+		var base_size = joystick_texture.get_size()
+		var base_scale = (_joystick_radius * 2) / base_size.x
+		
+		draw_set_transform(_joystick.position, 0, Vector2(base_scale, base_scale))
+		draw_texture(joystick_texture, -base_size / 2, Color(1, 1, 1, joystick_opacity))
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+		
+		var stick_size = stick_texture.get_size()
+		var stick_scale = (_stick_radius * 2) / stick_size.x
+		
+		draw_set_transform(_stick.position, 0, Vector2(stick_scale, stick_scale))
+		draw_texture(stick_texture, -stick_size / 2, Color(1, 1, 1, stick_opacity))
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	else:
+		_joystick.draw(self, false)
+		_stick.draw(self, false)
+		
 	scale = Vector2(scale_factor, scale_factor)
 	set_size(Vector2((_joystick_radius * 2) + (_joystick_border_width * 2), (_joystick_radius * 2) + (_joystick_border_width * 2)))
+
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
@@ -168,7 +205,16 @@ func _gui_input(event: InputEvent) -> void:
 
 	elif event is InputEventScreenDrag and _drag_started_inside:
 		_update_stick(event.position)
+
+
+func _get_configuration_warnings() -> PackedStringArray:
+	warnings = []
+	if use_textures and (joystick_texture == null or stick_texture == null):
+		warnings.append("The joystick_texture and stick_texture properties must be set when using use_textures = true.")
+	return warnings
+	
 #endregion Engine Methods =============================================
+
 
 #region Private Methods ============================================
 func _update_stick(_position: Vector2) -> void:
@@ -187,6 +233,7 @@ func _update_stick(_position: Vector2) -> void:
 
 	_update_emit_signals()
 
+
 func _reset_values() -> void:
 	_delta = Vector2.ZERO
 	value = Vector2.ZERO
@@ -202,6 +249,7 @@ func _reset_values() -> void:
 		_in_deadzone = true
 		
 	queue_redraw()
+
 
 ## Applies linear deadzone adjustment and calculates resulting angles.
 func _apply_deadzone(input_value: Vector2) -> Dictionary:
@@ -241,6 +289,7 @@ func _apply_deadzone(input_value: Vector2) -> Dictionary:
 			"angle_degrees": 0.0
 		}
 
+
 func _update_emit_signals() -> void:
 	if not active:
 		return
@@ -261,6 +310,12 @@ func _update_emit_signals() -> void:
 		angle_degrees_not_clockwise
 	)
 
+
+func _update_real_size() -> void:
+	real_size = size * scale
+	pivot_offset = size / 2
+	
+	
 ## Calculates the angle of a vector in degrees.
 func _get_angle_delta(delta: Vector2, continuous: bool, clockwise: bool) -> float:
 	var angle_deg = 0.0
@@ -273,27 +328,33 @@ func _get_angle_delta(delta: Vector2, continuous: bool, clockwise: bool) -> floa
 	return angle_deg
 #endregion Private Methods ===========================================
 
+
 #region Public Methods =============================================
 ## Returns the current joystick vector value.
 func get_value() -> Vector2:
 	return value
 
+
 ## Returns the joystick distance (0 to 1).
 func get_distance() -> float:
 	return distance
+
 
 ## Returns the current joystick angle (clockwise).
 func get_angle_degrees_clockwise() -> float:
 	return angle_degrees_clockwise
 
+
 ## Returns the current joystick angle (counter-clockwise).
 func get_angle_degrees_not_clockwise() -> float:
 	return angle_degrees_not_clockwise
+
 
 ## Returns a specific angle configuration.
 func get_angle_degrees(continuous: bool = true, clockwise: bool = false) -> float:
 	return _get_angle_delta(_delta, continuous, clockwise)
 #endregion Public Methods ============================================
+
 
 #region Classes ====================================================
 class VirtualJoystickCircle extends RefCounted:
