@@ -249,15 +249,20 @@ func _gui_input(event: InputEvent) -> void:
 			if _drag_started_inside:
 				_click_in = true
 				_update_stick(event.position)
+			else:
+				_click_in = false
 		else:
-			_stick.position = _stick_start_position
 			if _click_in:
 				_reset_values()
-				_click_in = false
 				_update_emit_signals()
+			_click_in = false
+			_drag_started_inside = false
+			_stick.position = _stick_start_position
+			queue_redraw()
 
-	elif event is InputEventScreenDrag and _drag_started_inside:
-		_update_stick(event.position)
+	elif event is InputEventScreenDrag:
+		if _drag_started_inside:
+			_update_stick(event.position)
 
 
 func _get_configuration_warnings() -> PackedStringArray:
