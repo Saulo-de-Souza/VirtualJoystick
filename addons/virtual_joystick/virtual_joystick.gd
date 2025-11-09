@@ -125,7 +125,7 @@ var angle_degrees_not_clockwise: float = 0.0
 			
 @export_category("Joystick")
 ## Enable the use of textures for the joystick.
-@export var joystick_use_textures: bool = false:
+@export var joystick_use_textures: bool = true:
 	set(value):
 		joystick_use_textures = value
 		if value and joystick_texture == null:
@@ -134,9 +134,9 @@ var angle_degrees_not_clockwise: float = 0.0
 		update_configuration_warnings()
 		queue_redraw()
 ## Select one of the available models. More models will be available soon.
-@export var joystick_presset_texture: _presset_enum: set = _set_joystick_presset
+@export var joystick_presset_texture: _presset_enum = _presset_enum.PRESSET_5: set = _set_joystick_presset
 ## Select a texture for the joystick figure.
-@export var joystick_texture: Texture2D:
+@export var joystick_texture: Texture2D = _JOYSTICK_TEXTURE_5:
 	set(value):
 		joystick_texture = value
 		update_configuration_warnings()
@@ -158,7 +158,7 @@ var angle_degrees_not_clockwise: float = 0.0
 			_joystick.opacity = value
 		queue_redraw()
 ## Width of the joystick base border.
-@export_range(1.0, 20.0, 0.01, "suffix:px", "or_greater") var joystick_border: float = 10.0:
+@export_range(1.0, 20.0, 0.01, "suffix:px", "or_greater") var joystick_border: float = 1.0:
 	set(value):
 		joystick_border = value
 		_joystick.width = value
@@ -173,7 +173,7 @@ var angle_degrees_not_clockwise: float = 0.0
 
 @export_category("Stick")
 ## Enable the use of textures for the stick.
-@export var stick_use_textures: bool = false:
+@export var stick_use_textures: bool = true:
 	set(value):
 		stick_use_textures = value
 		if value and stick_texture == null:
@@ -181,9 +181,9 @@ var angle_degrees_not_clockwise: float = 0.0
 		update_configuration_warnings()
 		queue_redraw()
 ## Select one of the available models. More models will be available soon.
-@export var stick_presset_texture: _presset_enum: set = _set_stick_presset
+@export var stick_presset_texture: _presset_enum = _presset_enum.PRESSET_5: set = _set_stick_presset
 ## Select a texture for the stick figure.
-@export var stick_texture: Texture2D:
+@export var stick_texture: Texture2D = _STICK_TEXTURE_5:
 	set(value):
 		stick_texture = value
 		update_configuration_warnings()
