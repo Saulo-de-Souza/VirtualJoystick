@@ -50,13 +50,35 @@ var _real_size: Vector2 = size * scale
 var _warnings: PackedStringArray = []
 
 var _DEFAULT_JOYSTICK_TEXTURE = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_1.png")
+var _JOYSTICK_TEXTURE_2 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_2.png")
+var _JOYSTICK_TEXTURE_3 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_3.png")
+var _JOYSTICK_TEXTURE_4 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_4.png")
+var _JOYSTICK_TEXTURE_5 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_5.png")
+var _JOYSTICK_TEXTURE_6 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_6.png")
+
 var _DEFAULT_STICK_TEXTURE = preload("res://addons/virtual_joystick/resources/textures/stick_texture_1.png")
+var _STICK_TEXTURE_2 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_2.png")
+var _STICK_TEXTURE_3 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_3.png")
+var _STICK_TEXTURE_4 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_4.png")
+var _STICK_TEXTURE_5 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_5.png")
+var _STICK_TEXTURE_6 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_6.png")
 
 enum _presset_enum {
 	## Nothing
 	NONE,
 	## Default presset texture
-	PRESSET_DEFAULT
+	PRESSET_DEFAULT,
+	## Texture 2
+	PRESSET_2,
+	## Texture 3
+	PRESSET_3,
+	## Texture 4
+	PRESSET_4,
+	## Texture 5
+	PRESSET_5,
+	## Texture 6
+	PRESSET_6,
+	
 }
 #endregion Private Properties ====================================
 
@@ -198,7 +220,7 @@ func _draw() -> void:
 		var base_size = joystick_texture.get_size()
 		var base_scale = (_joystick_radius * 2) / base_size.x
 		draw_set_transform(_joystick.position, 0, Vector2(base_scale, base_scale))
-		draw_texture(joystick_texture, -base_size / 2, Color(1, 1, 1, joystick_opacity))
+		draw_texture(joystick_texture, -base_size / 2, Color(joystick_color.r, joystick_color.g, joystick_color.b, joystick_opacity))
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
 		_joystick.draw(self, false)
@@ -207,7 +229,7 @@ func _draw() -> void:
 		var stick_size = stick_texture.get_size()
 		var stick_scale = (_stick_radius * 2) / stick_size.x
 		draw_set_transform(_stick.position, 0, Vector2(stick_scale, stick_scale))
-		draw_texture(stick_texture, -stick_size / 2, Color(1, 1, 1, stick_opacity))
+		draw_texture(stick_texture, -stick_size / 2, Color(stick_color.r, stick_color.g, stick_color.b, stick_opacity))
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
 		_stick.draw(self, false)
@@ -363,8 +385,18 @@ func _set_joystick_presset(_value: _presset_enum) -> void:
 	match (_value):
 		_presset_enum.PRESSET_DEFAULT:
 			joystick_texture = _DEFAULT_JOYSTICK_TEXTURE
+		_presset_enum.PRESSET_2:
+			joystick_texture = _JOYSTICK_TEXTURE_2
+		_presset_enum.PRESSET_3:
+			joystick_texture = _JOYSTICK_TEXTURE_3
+		_presset_enum.PRESSET_4:
+			joystick_texture = _JOYSTICK_TEXTURE_4
+		_presset_enum.PRESSET_5:
+			joystick_texture = _JOYSTICK_TEXTURE_5
+		_presset_enum.PRESSET_6:
+			joystick_texture = _JOYSTICK_TEXTURE_6
 		_presset_enum.NONE:
-			if joystick_texture == _DEFAULT_JOYSTICK_TEXTURE:
+			if joystick_texture in [_DEFAULT_JOYSTICK_TEXTURE, _JOYSTICK_TEXTURE_2, _JOYSTICK_TEXTURE_3, _JOYSTICK_TEXTURE_4, _JOYSTICK_TEXTURE_5, _JOYSTICK_TEXTURE_6]:
 				joystick_texture = null
 
 func _set_stick_presset(_value: _presset_enum) -> void:
@@ -372,8 +404,18 @@ func _set_stick_presset(_value: _presset_enum) -> void:
 	match (_value):
 		_presset_enum.PRESSET_DEFAULT:
 			stick_texture = _DEFAULT_STICK_TEXTURE
+		_presset_enum.PRESSET_2:
+			stick_texture = _STICK_TEXTURE_2
+		_presset_enum.PRESSET_3:
+			stick_texture = _STICK_TEXTURE_3
+		_presset_enum.PRESSET_4:
+			stick_texture = _STICK_TEXTURE_4
+		_presset_enum.PRESSET_5:
+			stick_texture = _STICK_TEXTURE_5
+		_presset_enum.PRESSET_6:
+			stick_texture = _STICK_TEXTURE_6
 		_presset_enum.NONE:
-			if stick_texture == _DEFAULT_STICK_TEXTURE:
+			if stick_texture in [_DEFAULT_STICK_TEXTURE, _STICK_TEXTURE_2, _STICK_TEXTURE_3, _STICK_TEXTURE_4, _STICK_TEXTURE_5, _STICK_TEXTURE_6]:
 				stick_texture = null
 #endregion Private Methods ===========================================
 
