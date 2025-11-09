@@ -41,27 +41,39 @@ Designed for mobile and touchscreen games, it provides smooth analog input handl
        move_and_slide(velocity)
    ```
 
+   ```gdscript
+   func _physics_process(delta: float) -> void:
+      var dir: Vector2 = virtual_joystick.get_value()
+
+      if dir.length() > 0:
+         player.velocity.x = dir.x * SPEED * delta * dir.length()
+         player.velocity.z = dir.y * SPEED * delta * dir.length()
+      else:
+         player.velocity.x = 0
+         player.velocity.z = 0
+   ```
+
 ---
 
 ## ⚙️ Exported Properties
 
-| Property                   | Type                 | Description                                                             |
-| -------------------------- | -------------------- | ----------------------------------------------------------------------- |
-| `active`                   | `bool`               | Enables or disables joystick input.                                     |
-| `deadzone`                 | `float`              | Linear deadzone threshold (0–0.9).                                      |
-| `scale_factor`             | `float`              | Global scale multiplier for joystick size.                              |
-| `only_mobile`              | `bool`               | Enables or disables the joystick display on mobile device screens only. |
-| `joystick_use_textures`    | `bool`               | Enable the use of textures for the joystick.                            |
-| `joystick_presset_texture` | `NOTHING or DEFAULT` | Select one of the available models. More models will be available soon. |
-| `joystick_texture`         | `Texture2D`          | Select a texture for the joystick figure.                               |
-| `joystick_color`           | `Color`              | Base color of the joystick background.                                  |
-| `joystick_opacity`         | `float`              | Opacity of the joystick base (0–1).                                     |
-| `joystick_border`          | `float`              | Width of the joystick border.                                           |
-| `stick_use_textures`       | `bool`               | Enable the use of textures for the stick.                               |
-| `stick_presset_texture`    | `NOTHING or DEFAULT` | Select one of the available models. More models will be available soon. |
-| `stick_texture`            | `Texture2D`          | Select a texture for the stick figure.                                  |
-| `stick_color`              | `Color`              | Color of the movable stick (thumb).                                     |
-| `stick_opacity`            | `float`              | Opacity of the stick (0–1).                                             |
+| Property                  | Type                 | Description                                                             |
+| ------------------------- | -------------------- | ----------------------------------------------------------------------- |
+| `active`                  | `bool`               | Enables or disables joystick input.                                     |
+| `deadzone`                | `float`              | Linear deadzone threshold (0–0.9).                                      |
+| `scale_factor`            | `float`              | Global scale multiplier for joystick size.                              |
+| `only_mobile`             | `bool`               | Enables or disables the joystick display on mobile device screens only. |
+| `joystick_use_textures`   | `bool`               | Enable the use of textures for the joystick.                            |
+| `joystick_preset_texture` | `NOTHING or DEFAULT` | Select one of the available models. More models will be available soon. |
+| `joystick_texture`        | `Texture2D`          | Select a texture for the joystick figure.                               |
+| `joystick_color`          | `Color`              | Base color of the joystick background.                                  |
+| `joystick_opacity`        | `float`              | Opacity of the joystick base (0–1).                                     |
+| `joystick_border`         | `float`              | Width of the joystick border.                                           |
+| `stick_use_textures`      | `bool`               | Enable the use of textures for the stick.                               |
+| `stick_preset_texture`    | `NOTHING or DEFAULT` | Select one of the available models. More models will be available soon. |
+| `stick_texture`           | `Texture2D`          | Select a texture for the stick figure.                                  |
+| `stick_color`             | `Color`              | Color of the movable stick (thumb).                                     |
+| `stick_opacity`           | `float`              | Opacity of the stick (0–1).                                             |
 
 ---
 
@@ -104,5 +116,6 @@ func _process(delta):
 
 **Screenshot InputManager**
 
-![Screenshot 1](./addons/virtual_joystick/screenshots/3.png)
-![Screenshot 12](./addons/virtual_joystick/screenshots/4.png)
+![Screenshot 1](./addons/virtual_joystick/screenshots/5.png)
+
+![Screenshot 2](./addons/virtual_joystick/screenshots/6.png)

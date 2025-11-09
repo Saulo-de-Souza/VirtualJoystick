@@ -63,21 +63,21 @@ var _STICK_TEXTURE_4 = preload("res://addons/virtual_joystick/resources/textures
 var _STICK_TEXTURE_5 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_5.png")
 var _STICK_TEXTURE_6 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_6.png")
 
-enum _presset_enum {
+enum _preset_enum {
 	## Nothing
 	NONE,
-	## Default presset texture
-	PRESSET_DEFAULT,
+	## Default preset texture
+	PRESET_DEFAULT,
 	## Texture 2
-	PRESSET_2,
+	PRESET_2,
 	## Texture 3
-	PRESSET_3,
+	PRESET_3,
 	## Texture 4
-	PRESSET_4,
+	PRESET_4,
 	## Texture 5
-	PRESSET_5,
+	PRESET_5,
 	## Texture 6
-	PRESSET_6,
+	PRESET_6,
 	
 }
 #endregion Private Properties ====================================
@@ -129,12 +129,12 @@ var angle_degrees_not_clockwise: float = 0.0
 	set(value):
 		joystick_use_textures = value
 		if value and joystick_texture == null:
-			_set_joystick_presset(joystick_presset_texture)
+			_set_joystick_preset(joystick_preset_texture)
 		_verify_can_use_border()
 		update_configuration_warnings()
 		queue_redraw()
 ## Select one of the available models. More models will be available soon.
-@export var joystick_presset_texture: _presset_enum = _presset_enum.PRESSET_5: set = _set_joystick_presset
+@export var joystick_preset_texture: _preset_enum = _preset_enum.PRESET_5: set = _set_joystick_preset
 ## Select a texture for the joystick figure.
 @export var joystick_texture: Texture2D = _JOYSTICK_TEXTURE_5:
 	set(value):
@@ -177,11 +177,11 @@ var angle_degrees_not_clockwise: float = 0.0
 	set(value):
 		stick_use_textures = value
 		if value and stick_texture == null:
-			_set_stick_presset(stick_presset_texture)
+			_set_stick_preset(stick_preset_texture)
 		update_configuration_warnings()
 		queue_redraw()
 ## Select one of the available models. More models will be available soon.
-@export var stick_presset_texture: _presset_enum = _presset_enum.PRESSET_5: set = _set_stick_presset
+@export var stick_preset_texture: _preset_enum = _preset_enum.PRESET_5: set = _set_stick_preset
 ## Select a texture for the stick figure.
 @export var stick_texture: Texture2D = _STICK_TEXTURE_5:
 	set(value):
@@ -271,7 +271,7 @@ func _get_configuration_warnings() -> PackedStringArray:
 		_warnings.append("The joystick_texture properties must be set when using joystick_use_textures = true.")
 	if stick_use_textures and (stick_texture == null):
 		_warnings.append("The stick_texture properties must be set when using stick_use_textures = true.")
-	if joystick_use_textures and joystick_texture != null and joystick_presset_texture != _presset_enum.NONE and joystick_border > 1.0:
+	if joystick_use_textures and joystick_texture != null and joystick_preset_texture != _preset_enum.NONE and joystick_border > 1.0:
 		_warnings.append("When using a texture preset, the ideal border height would be 1.0.")
 	return _warnings
 	
@@ -390,43 +390,43 @@ func _get_angle_delta(delta: Vector2, continuous: bool, clockwise: bool) -> floa
 	return angle_deg
 
 
-func _set_joystick_presset(_value: _presset_enum) -> void:
-	joystick_presset_texture = _value
+func _set_joystick_preset(_value: _preset_enum) -> void:
+	joystick_preset_texture = _value
 	match (_value):
-		_presset_enum.PRESSET_DEFAULT:
+		_preset_enum.PRESET_DEFAULT:
 			joystick_texture = _DEFAULT_JOYSTICK_TEXTURE
-		_presset_enum.PRESSET_2:
+		_preset_enum.PRESET_2:
 			joystick_texture = _JOYSTICK_TEXTURE_2
-		_presset_enum.PRESSET_3:
+		_preset_enum.PRESET_3:
 			joystick_texture = _JOYSTICK_TEXTURE_3
-		_presset_enum.PRESSET_4:
+		_preset_enum.PRESET_4:
 			joystick_texture = _JOYSTICK_TEXTURE_4
-		_presset_enum.PRESSET_5:
+		_preset_enum.PRESET_5:
 			joystick_texture = _JOYSTICK_TEXTURE_5
-		_presset_enum.PRESSET_6:
+		_preset_enum.PRESET_6:
 			joystick_texture = _JOYSTICK_TEXTURE_6
-		_presset_enum.NONE:
+		_preset_enum.NONE:
 			if joystick_texture in [_DEFAULT_JOYSTICK_TEXTURE, _JOYSTICK_TEXTURE_2, _JOYSTICK_TEXTURE_3, _JOYSTICK_TEXTURE_4, _JOYSTICK_TEXTURE_5, _JOYSTICK_TEXTURE_6]:
 				joystick_texture = null
 	_verify_can_use_border()
 	update_configuration_warnings()
 				
-func _set_stick_presset(_value: _presset_enum) -> void:
-	stick_presset_texture = _value
+func _set_stick_preset(_value: _preset_enum) -> void:
+	stick_preset_texture = _value
 	match (_value):
-		_presset_enum.PRESSET_DEFAULT:
+		_preset_enum.PRESET_DEFAULT:
 			stick_texture = _DEFAULT_STICK_TEXTURE
-		_presset_enum.PRESSET_2:
+		_preset_enum.PRESET_2:
 			stick_texture = _STICK_TEXTURE_2
-		_presset_enum.PRESSET_3:
+		_preset_enum.PRESET_3:
 			stick_texture = _STICK_TEXTURE_3
-		_presset_enum.PRESSET_4:
+		_preset_enum.PRESET_4:
 			stick_texture = _STICK_TEXTURE_4
-		_presset_enum.PRESSET_5:
+		_preset_enum.PRESET_5:
 			stick_texture = _STICK_TEXTURE_5
-		_presset_enum.PRESSET_6:
+		_preset_enum.PRESET_6:
 			stick_texture = _STICK_TEXTURE_6
-		_presset_enum.NONE:
+		_preset_enum.NONE:
 			if stick_texture in [_DEFAULT_STICK_TEXTURE, _STICK_TEXTURE_2, _STICK_TEXTURE_3, _STICK_TEXTURE_4, _STICK_TEXTURE_5, _STICK_TEXTURE_6]:
 				stick_texture = null
 
