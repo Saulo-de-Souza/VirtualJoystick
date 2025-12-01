@@ -5,3 +5,4 @@ LICENSE.md export-ignore
 addons/virtual_joystick/icon.png export-ignore
 addons/virtual_joystick/screenshots export-ignore
 gp.bat export-ignore
+/assets export-ignore
