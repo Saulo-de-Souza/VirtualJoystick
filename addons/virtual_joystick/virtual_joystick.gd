@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/virtual_joystick/icon.svg")
 class_name VirtualJoystick
 extends Control
 

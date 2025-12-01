@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-var icon = preload("res://addons/virtual_joystick/icon-16x16.png")
+var icon = preload("res://addons/virtual_joystick/icon.svg")
 var script_main = preload("res://addons/virtual_joystick/virtual_joystick.gd")
 
 func _enter_tree():
