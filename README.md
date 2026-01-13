@@ -116,9 +116,9 @@ func _process(delta):
 
 **Screenshot InputManager**
 
-![Screenshot 1](./addons/virtual_joystick/screenshots/5.png)
-
 ![Screenshot 2](./addons/virtual_joystick/screenshots/6.png)
+
+![Screenshot 1](./addons/virtual_joystick/screenshots/5.png)
 
 ---
 
