@@ -1,128 +1,161 @@
-# Virtual Joystick for Godot
+# Virtual Joystick Plus for Godot
 
-**VirtualJoystick** is a lightweight and fully customizable on-screen joystick plugin for **Godot Engine 4.4+**.  
-Designed for mobile and touchscreen games, it provides smooth analog input handling, complete deadzone control, and responsive signals for precise player movement.
+**VirtualJoystickPlus** is a fully featured and highly configurable on-screen joystick plugin for **Godot Engine 4.5+**.  
+Designed specifically for mobile and touch-based games, it provides precise analog input, multiple interaction modes, flexible visibility control, and extensive visual customization.
 
 ---
 
 ## Features
 
-- Clean and modern UI with customizable colors, opacity, and scaling.
-- Linear **deadzone** adjustment for natural analog feel.
-- Provides normalized direction vector, distance, and multiple angle formats.
-- Emits `analogic_changed`, `deadzone_enter`, and `deadzone_leave` signals.
-- Plug-and-play integration with minimal setup required.
-- Works seamlessly with both `Control`-based and 3D input systems.
+- Multiple joystick interaction modes: **NORMAL**, **DYNAMIC**, and **FOLLOW**.
+- Configurable visibility behavior (always visible or only while touching).
+- Normalized analog output (direction, distance, and angles).
+- Linear **deadzone** handling with enter/leave signals.
+- Normalized positioning using relative coordinates (0.0 → 1.0).
+- Fully customizable visuals using shapes or textures.
+- Mobile-aware visibility option.
 
 ---
 
 ## Installation
 
-1. Copy the plugin folder to your Godot project's `addons/` directory:
+1. Copy the plugin folder into your Godot project:
 
-   ```bash
-   addons/virtual_joystick/
-   ```
+```bash
+addons/virtual_joystick_plus/
+```
 
-2. Enable it in the **Godot Editor**:  
-   **Project → Project Settings → Plugins → VirtualJoystick → Enable**
+2. Enable the plugin in the editor:
+
+**Project → Project Settings → Plugins → VirtualJoystickPlus → Enable**
 
 ---
 
 ## How to Use
 
-1. Add a **VirtualJoystick** node to your scene.
-2. Connect the `analogic_changed` signal to your player or camera controller.
-3. Handle joystick input in GDScript:
+1. Add a **VirtualJoystickPlus** node to your scene (inside a `Control`).
+2. Configure the joystick mode, visibility mode, and appearance in the Inspector.
+3. Connect the `analogic_changed` signal or poll values directly.
 
-   ```gdscript
-   func _on_virtual_joystick_analogic_changed(value, distance, angle, angle_clockwise, angle_not_clockwise):
-       velocity = value * max_speed
-       move_and_slide(velocity)
-   ```
+### Example (Signal-based)
 
-   ```gdscript
-   func _physics_process(delta: float) -> void:
-      var dir: Vector2 = virtual_joystick.get_value()
+```gdscript
+func _on_virtual_joystick_plus_analogic_changed(
+    value: Vector2,
+    distance: float,
+    angle: float,
+    angle_clockwise: float,
+    angle_not_clockwise: float
+) -> void:
+    velocity = value * max_speed * distance
+```
 
-      if dir.length() > 0:
-         player.velocity.x = dir.x * SPEED * delta * dir.length()
-         player.velocity.z = dir.y * SPEED * delta * dir.length()
-      else:
-         player.velocity.x = 0
-         player.velocity.z = 0
-   ```
+### Example (Polling)
+
+```gdscript
+@onready var joystick: VirtualJoystickPlus = $VirtualJoystickPlus
+
+func _physics_process(delta: float) -> void:
+    var dir := joystick.get_value()
+    if dir.length() > 0.0:
+        player.velocity = dir * SPEED
+    else:
+        player.velocity = Vector2.ZERO
+```
 
 ---
 
 ## ⚙️ Exported Properties
 
-| Property                  | Type                 | Description                                                             |
-| ------------------------- | -------------------- | ----------------------------------------------------------------------- |
-| `active`                  | `bool`               | Enables or disables joystick input.                                     |
-| `deadzone`                | `float`              | Linear deadzone threshold (0–0.9).                                      |
-| `scale_factor`            | `float`              | Global scale multiplier for joystick size.                              |
-| `only_mobile`             | `bool`               | Enables or disables the joystick display on mobile device screens only. |
-| `joystick_use_textures`   | `bool`               | Enable the use of textures for the joystick.                            |
-| `joystick_preset_texture` | `NOTHING or DEFAULT` | Select one of the available models. More models will be available soon. |
-| `joystick_texture`        | `Texture2D`          | Select a texture for the joystick figure.                               |
-| `joystick_color`          | `Color`              | Base color of the joystick background.                                  |
-| `joystick_opacity`        | `float`              | Opacity of the joystick base (0–1).                                     |
-| `joystick_border`         | `float`              | Width of the joystick border.                                           |
-| `stick_use_textures`      | `bool`               | Enable the use of textures for the stick.                               |
-| `stick_preset_texture`    | `NOTHING or DEFAULT` | Select one of the available models. More models will be available soon. |
-| `stick_texture`           | `Texture2D`          | Select a texture for the stick figure.                                  |
-| `stick_color`             | `Color`              | Color of the movable stick (thumb).                                     |
-| `stick_opacity`           | `float`              | Opacity of the stick (0–1).                                             |
+### General
+
+| Property            | Type             | Description                                                  |
+| ------------------- | ---------------- | ------------------------------------------------------------ |
+| `active`            | `bool`           | Enables or disables joystick input.                          |
+| `joystick_mode`     | `JoystickMode`   | Defines how the joystick behaves (NORMAL, DYNAMIC, FOLLOW).  |
+| `visibility_mode`   | `VisibilityMode` | Controls when the joystick is visible.                       |
+| `deadzone`          | `float`          | Linear deadzone threshold (0.0 – 0.9).                       |
+| `scale_factor`      | `float`          | Global scale multiplier for joystick size.                   |
+| `only_mobile`       | `bool`           | Shows the joystick only on mobile platforms.                 |
+| `relative_position` | `Vector2`        | Normalized base position (0–1) relative to the Control size. |
+
+### Joystick (Base)
+
+| Property                  | Type        | Description                                      |
+| ------------------------- | ----------- | ------------------------------------------------ |
+| `joystick_use_textures`   | `bool`      | Enables texture rendering for the joystick base. |
+| `joystick_preset_texture` | `Preset`    | Selects a predefined joystick texture.           |
+| `joystick_texture`        | `Texture2D` | Custom joystick base texture.                    |
+| `joystick_color`          | `Color`     | Base color of the joystick.                      |
+| `joystick_opacity`        | `float`     | Opacity of the joystick base (0–1).              |
+| `joystick_border`         | `float`     | Width of the joystick border.                    |
+
+### Stick (Thumb)
+
+| Property               | Type        | Description                              |
+| ---------------------- | ----------- | ---------------------------------------- |
+| `stick_use_textures`   | `bool`      | Enables texture rendering for the stick. |
+| `stick_preset_texture` | `Preset`    | Selects a predefined stick texture.      |
+| `stick_texture`        | `Texture2D` | Custom stick texture.                    |
+| `stick_color`          | `Color`     | Stick (thumb) color.                     |
+| `stick_opacity`        | `float`     | Stick opacity (0–1).                     |
+
+---
+
+## Joystick Modes
+
+- **NORMAL**  
+  Fixed position joystick. Only reacts to touches that start inside the base area.
+
+- **DYNAMIC**  
+  The joystick appears at the touch position and remains fixed until release.
+
+- **FOLLOW**  
+  Similar to DYNAMIC, but the base follows the finger when the stick reaches its maximum radius.
+
+---
+
+## Visibility Modes
+
+- **VISIBILITY_ALWAYS**  
+  The joystick is always visible.
+
+- **VISIBILITY_WHEN_TOUCHED**  
+  The joystick appears only while the screen is being touched.
 
 ---
 
 ## Signals
 
-| Signal                                                                           | Description                                 |
-| -------------------------------------------------------------------------------- | ------------------------------------------- |
-| `analogic_changed(value, distance, angle, angle_clockwise, angle_not_clockwise)` | Emitted when the stick is moved.            |
-| `deadzone_enter()`                                                               | Emitted when the stick enters the deadzone. |
-| `deadzone_leave()`                                                               | Emitted when the stick leaves the deadzone. |
+| Signal                                                                           | Description                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------- |
+| `analogic_changed(value, distance, angle, angle_clockwise, angle_not_clockwise)` | Emitted whenever the joystick value changes. |
+| `deadzone_enter()`                                                               | Emitted when the stick enters the deadzone.  |
+| `deadzone_leave()`                                                               | Emitted when the stick leaves the deadzone.  |
 
 ---
 
 ## Methods
 
-| Method                                     | Returns   | Description                                 |
-| ------------------------------------------ | --------- | ------------------------------------------- |
-| `get_value()`                              | `Vector2` | Returns normalized direction vector.        |
-| `get_distance()`                           | `float`   | Returns distance (0–1).                     |
-| `get_angle_degrees_clockwise()`            | `float`   | Returns clockwise angle in degrees.         |
-| `get_angle_degrees_not_clockwise()`        | `float`   | Returns counter-clockwise angle in degrees. |
-| `get_angle_degrees(continuous, clockwise)` | `float`   | Returns specific angle configuration.       |
-
----
-
-## Example Integration
-
-```gdscript
-@onready var joystick: VirtualJoystick = $VirtualJoystick
-
-func _process(delta):
-    var input_vec = joystick.get_value()
-    var movement = input_vec * speed * delta
-    move_and_slide(movement)
-```
+| Method                                     | Returns   | Description                                     |
+| ------------------------------------------ | --------- | ----------------------------------------------- |
+| `get_value()`                              | `Vector2` | Returns the normalized direction vector.        |
+| `get_distance()`                           | `float`   | Returns the normalized distance (0–1).          |
+| `get_angle_degrees_clockwise()`            | `float`   | Returns the clockwise angle in degrees.         |
+| `get_angle_degrees_not_clockwise()`        | `float`   | Returns the counter-clockwise angle in degrees. |
+| `get_angle_degrees(continuous, clockwise)` | `float`   | Returns a specific angle configuration.         |
 
 ---
 
 ## Screenshots
 
-**Screenshot InputManager**
-
-![Screenshot 2](./addons/virtual_joystick/screenshots/6.png)
-
-![Screenshot 1](./addons/virtual_joystick/screenshots/5.png)
+![Joystick Example](./addons/virtual_joystick_plus/screenshots/1.png)
+![Joystick Debug](./addons/virtual_joystick_plus/screenshots/2.png)
 
 ---
 
 ## ❤️ Support
 
 If this project helps you, consider supporting:
+
 https://github.com/sponsors/Saulo-de-Souza

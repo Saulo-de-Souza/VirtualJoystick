@@ -2,8 +2,7 @@ README.md export-ignore
 LICENSE.md export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
-addons/virtual_joystick/icon.png export-ignore
-addons/virtual_joystick/screenshots export-ignore
+addons/virtual_joystick_plus/screenshots export-ignore
 gp.bat export-ignore
 /assets export-ignore
 .github export-ignore

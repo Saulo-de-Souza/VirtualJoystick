@@ -1,9 +1,11 @@
 @tool
-@icon("res://addons/virtual_joystick/icon.svg")
-class_name VirtualJoystick
+@icon("res://addons/virtual_joystick_plus/icon.svg")
+
+## A virtual on-screen joystick used to provide analog movement input on touch-based devices.
+class_name VirtualJoystickPlus
 extends Control
 
-#region Signals =================================================
+
 ## Emitted when the stick is moved.
 signal analogic_changed(
 	value: Vector2,
@@ -18,20 +20,16 @@ signal deadzone_enter
 
 ## Emitted when the stick leaves the dead zone.
 signal deadzone_leave
-#endregion Signals ===============================================
 
 
-#region Private Properties ======================================
 var _joystick: VirtualJoystickCircle
 var _stick: VirtualJoystickCircle
 
 var _joystick_radius: float = 100.0
 var _joystick_border_width: float = 10.0
-var _joystick_start_position: Vector2 = Vector2(_joystick_radius + _joystick_border_width, _joystick_radius + _joystick_border_width)
 
 var _stick_radius: float = 45.0
 var _stick_border_width: float = -1.0
-var _stick_start_position: Vector2 = _joystick_start_position
 
 var _drag_started_inside := false
 var _click_in := false
@@ -50,21 +48,27 @@ var _in_deadzone: bool = false:
 var _real_size: Vector2 = size * scale
 var _warnings: PackedStringArray = []
 
-var _DEFAULT_JOYSTICK_TEXTURE = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_1.png")
-var _JOYSTICK_TEXTURE_2 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_2.png")
-var _JOYSTICK_TEXTURE_3 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_3.png")
-var _JOYSTICK_TEXTURE_4 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_4.png")
-var _JOYSTICK_TEXTURE_5 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_5.png")
-var _JOYSTICK_TEXTURE_6 = preload("res://addons/virtual_joystick/resources/textures/joystick_texture_6.png")
+var _relative_position: Vector2 = Vector2.ZERO
+var _touch_index: int = -1
+var _dynamic_active: bool = false
+var _visible_runtime: bool = true
 
-var _DEFAULT_STICK_TEXTURE = preload("res://addons/virtual_joystick/resources/textures/stick_texture_1.png")
-var _STICK_TEXTURE_2 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_2.png")
-var _STICK_TEXTURE_3 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_3.png")
-var _STICK_TEXTURE_4 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_4.png")
-var _STICK_TEXTURE_5 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_5.png")
-var _STICK_TEXTURE_6 = preload("res://addons/virtual_joystick/resources/textures/stick_texture_6.png")
 
-enum _preset_enum {
+var _DEFAULT_JOYSTICK_TEXTURE = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_1.png")
+var _JOYSTICK_TEXTURE_2 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_2.png")
+var _JOYSTICK_TEXTURE_3 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_3.png")
+var _JOYSTICK_TEXTURE_4 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_4.png")
+var _JOYSTICK_TEXTURE_5 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_5.png")
+var _JOYSTICK_TEXTURE_6 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_6.png")
+
+var _DEFAULT_STICK_TEXTURE = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_1.png")
+var _STICK_TEXTURE_2 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_2.png")
+var _STICK_TEXTURE_3 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_3.png")
+var _STICK_TEXTURE_4 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_4.png")
+var _STICK_TEXTURE_5 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_5.png")
+var _STICK_TEXTURE_6 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_6.png")
+
+enum Preset {
 	## Nothing
 	NONE,
 	## Default preset texture
@@ -79,12 +83,27 @@ enum _preset_enum {
 	PRESET_5,
 	## Texture 6
 	PRESET_6,
-	
 }
-#endregion Private Properties ====================================
+
+enum JoystickMode {
+	## The joystick has a fixed position and only responds to touches that start inside its base area. [br]
+	## This is the classic on-screen joystick behavior.
+	NORMAL,
+	## The joystick appears at the position where the user touches the screen and remains fixed there until the touch is released.
+	DYNAMIC,
+	## Similar to DYNAMIC, but when the stick reaches the maximum radius, the joystick base follows the finger movement.[br]
+	## The base movement is clamped to the Control size, ensuring it never leaves its bounds.
+	FOLLOW
+}
+
+enum VisibilityMode {
+		## The joystick is always visible, even when not being interacted with.
+		VISIBILITY_ALWAYS,
+		## The joystick becomes visible only while the screen is being touched and automatically hides when the touch is released.
+		VISIBILITY_WHEN_TOUCHED,
+	};
 
 
-#region Public Properties =======================================
 ## Normalized joystick direction vector (X, Y).
 var value: Vector2 = Vector2.ZERO
 
@@ -99,20 +118,49 @@ var angle_degrees_clockwise: float = 0.0
 
 ## Angle in degrees, measured counter-clockwise.
 var angle_degrees_not_clockwise: float = 0.0
-#endregion Public Properties =====================================
 
 
-#region Exports ===================================================
 @export_category("Virtual Joystick")
 ## Enables or disables the joystick input.
 @export var active: bool = true
+
+## Defines how the joystick behaves in relation to touch input.[br]
+##[br] 
+## [b][color=yellow]IMPORTANT:[/color][/b][br]
+## The size of this Control defines the touch interaction area for the joystick.[br]
+## For [b]DYNAMIC[/b] and [b]FOLLOW[/b] modes to work as expected, you should resize this Control
+## to cover the desired screen region (for example, the left half of the screen
+## for a left movement stick).[br]
+##[br]
+## - [b]NORMAL:[/b] Reacts only to touches starting inside the joystick base.[br]
+## - [b]DYNAMIC:[/b] The joystick appears at the touch position within this Control area.[br]
+## - [b]FOLLOW:[/b] Similar to DYNAMIC, but the base follows the finger when reaching its limit.
+@export var joystick_mode: JoystickMode = JoystickMode.NORMAL
+
+## Controls when the joystick is visually displayed on the screen.[br]
+##[br]
+## [b][color=yellow]Note:[/color][/b][br]
+## Visibility is independent from touch detection. Touch events are still limited
+## to the size of this Control, which should be resized to match the intended
+## interaction area, especially when using dynamic joystick modes.
+@export var visibility_mode: VisibilityMode = VisibilityMode.VISIBILITY_ALWAYS:
+	set(value):
+		visibility_mode = value
+		if not Engine.is_editor_hint():
+			if visibility_mode == VisibilityMode.VISIBILITY_WHEN_TOUCHED:
+				_visible_runtime = false
+			else:
+				_visible_runtime = true
+			queue_redraw()
+		
 ## Deadzone threshold (0.0 = off, 1.0 = full range).
 @export_range(0.0, 0.9, 0.001, "suffix:length") var deadzone: float = 0.1
 ## Global scale factor of the joystick.
 @export_range(0.1, 2.0, 0.001, "suffix:x", "or_greater") var scale_factor: float = 1.0:
 	set(value):
 		scale_factor = value
-		scale = Vector2(value, value)
+		_joystick.scale = scale_factor
+		_stick.scale = scale_factor
 		_update_real_size()
 		queue_redraw()
 ## If true, the Joystick will only be displayed on the screen on mobile devices.
@@ -124,6 +172,27 @@ var angle_degrees_not_clockwise: float = 0.0
 		else:
 			visible = true
 			
+## Sets the base position of the joystick using normalized coordinates (0.0 to 1.0).[br]
+##[br]
+## This position is relative to the size of this Control and represents the initial
+## center of the joystick base.[br]
+##[br]
+## - (0, 0) places the joystick at the top-left corner.[br]
+## - (0.5, 0.5) places it at the center.[br]
+## - (1, 1) places it at the bottom-right corner.[br]
+##[br]
+## [b][color=yellow]IMPORTANT:[/color][/b][br]
+## For [b]DYNAMIC[/b] and [b]FOLLOW[/b] modes, this value is used only as the initial position.
+## The joystick will then respond to touch events occurring anywhere inside this
+## [b]Control's area[/b].[br]
+##[br]
+## The final position is clamped to ensure the joystick remains fully visible.
+@export var relative_position: Vector2 = Vector2(0.5, 0.5):
+	set(value):
+		relative_position = value.clamp(Vector2.ZERO, Vector2.ONE)
+		_update_base_from_relative()
+
+
 @export_category("Joystick")
 ## Enable the use of textures for the joystick.
 @export var joystick_use_textures: bool = true:
@@ -135,7 +204,7 @@ var angle_degrees_not_clockwise: float = 0.0
 		update_configuration_warnings()
 		queue_redraw()
 ## Select one of the available models. More models will be available soon.
-@export var joystick_preset_texture: _preset_enum = _preset_enum.PRESET_5: set = _set_joystick_preset
+@export var joystick_preset_texture: Preset = Preset.PRESET_5: set = _set_joystick_preset
 ## Select a texture for the joystick figure.
 @export var joystick_texture: Texture2D = _JOYSTICK_TEXTURE_5:
 	set(value):
@@ -164,10 +233,8 @@ var angle_degrees_not_clockwise: float = 0.0
 		joystick_border = value
 		_joystick.width = value
 		_joystick_border_width = value
-		_joystick_start_position = Vector2(_joystick_radius + _joystick_border_width, _joystick_radius + _joystick_border_width)
-		_joystick.position = _joystick_start_position
-		_stick_start_position = Vector2(_joystick_radius + _joystick_border_width, _joystick_radius + _joystick_border_width)
-		_stick.position = _stick_start_position
+		_joystick.position = _joystick.relative_position
+		_stick.position = _stick.relative_position
 		update_configuration_warnings()
 		queue_redraw()
 
@@ -182,7 +249,7 @@ var angle_degrees_not_clockwise: float = 0.0
 		update_configuration_warnings()
 		queue_redraw()
 ## Select one of the available models. More models will be available soon.
-@export var stick_preset_texture: _preset_enum = _preset_enum.PRESET_5: set = _set_stick_preset
+@export var stick_preset_texture: Preset = Preset.PRESET_5: set = _set_stick_preset
 ## Select a texture for the stick figure.
 @export var stick_texture: Texture2D = _STICK_TEXTURE_5:
 	set(value):
@@ -204,64 +271,103 @@ var angle_degrees_not_clockwise: float = 0.0
 		if _stick:
 			_stick.opacity = value
 		queue_redraw()
-#endregion Exports =================================================
 
 
-#region Engine Methods =============================================
 func _init() -> void:
-	_joystick = VirtualJoystickCircle.new(_joystick_start_position, _joystick_radius, _joystick_border_width, false, joystick_color, joystick_opacity)
-	_stick = VirtualJoystickCircle.new(_stick_start_position, _stick_radius, _stick_border_width, true, stick_color, stick_opacity)
+	custom_minimum_size = Vector2(300, 300)
+	_joystick = VirtualJoystickCircle.new(_relative_position, _relative_position, scale_factor, _joystick_radius, _joystick_border_width, false, joystick_color, joystick_opacity)
+	_stick = VirtualJoystickCircle.new(_relative_position, _relative_position, scale_factor, _stick_radius, _stick_border_width, true, stick_color, stick_opacity)
 	queue_redraw()
-	
+
 
 func _ready() -> void:
-	set_size(Vector2(_joystick_radius * 2 + _joystick_border_width * 2, _joystick_radius * 2 + _joystick_border_width * 2))
 	_update_real_size()
+
+	if not Engine.is_editor_hint():
+		if visibility_mode == VisibilityMode.VISIBILITY_WHEN_TOUCHED:
+			_visible_runtime = false
+		else:
+			_visible_runtime = true
+		queue_redraw()
+	_update_base_from_relative()
 
 
 func _draw() -> void:
+	if not _visible_runtime:
+		return
+
 	if joystick_use_textures and joystick_texture:
 		var base_size = joystick_texture.get_size()
-		var base_scale = (_joystick_radius * 2) / base_size.x
+		var base_scale = ((_joystick_radius * 2) / base_size.x) * scale_factor
 		draw_set_transform(_joystick.position, 0, Vector2(base_scale, base_scale))
 		draw_texture(joystick_texture, -base_size / 2, Color(joystick_color.r, joystick_color.g, joystick_color.b, joystick_opacity))
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
-		_joystick.draw(self, false)
-			
+		_joystick.draw(self )
+
 	if stick_use_textures and stick_texture:
 		var stick_size = stick_texture.get_size()
-		var stick_scale = (_stick_radius * 2) / stick_size.x
+		var stick_scale = ((_stick_radius * 2) / stick_size.x) * scale_factor
 		draw_set_transform(_stick.position, 0, Vector2(stick_scale, stick_scale))
 		draw_texture(stick_texture, -stick_size / 2, Color(stick_color.r, stick_color.g, stick_color.b, stick_opacity))
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
-		_stick.draw(self, false)
-
-	scale = Vector2(scale_factor, scale_factor)
-	set_size(Vector2((_joystick_radius * 2) + (_joystick_border_width * 2), (_joystick_radius * 2) + (_joystick_border_width * 2)))
+		_stick.draw(self )
 
 
 func _gui_input(event: InputEvent) -> void:
+	if not active:
+		return
+
 	if event is InputEventScreenTouch:
 		if event.pressed:
-			distance = event.position.distance_to(_joystick.position)
-			_drag_started_inside = distance <= _joystick.radius + _joystick.width / 2
-			if _drag_started_inside:
-				_click_in = true
-				_update_stick(event.position)
-			else:
-				_click_in = false
+			_touch_index = event.index
+
+			if visibility_mode == VisibilityMode.VISIBILITY_WHEN_TOUCHED:
+				_visible_runtime = true
+				queue_redraw()
+
+			match joystick_mode:
+				JoystickMode.NORMAL:
+					distance = event.position.distance_to(_joystick.position)
+					_drag_started_inside = distance <= _joystick.radius * _joystick.scale + _joystick.width / 2
+					if _drag_started_inside:
+						_click_in = true
+						_update_stick(event.position)
+					else:
+						_click_in = false
+
+				JoystickMode.DYNAMIC, JoystickMode.FOLLOW:
+					_dynamic_active = true
+					_click_in = true
+					_drag_started_inside = true
+
+					var local_pos = event.position
+					_set_base_position(local_pos)
+					_update_stick(local_pos)
+
 		else:
-			if _click_in:
-				_reset_values()
-				_update_emit_signals()
+			if event.index != _touch_index:
+				return
+
+			_reset_values()
+			_update_emit_signals()
+
 			_click_in = false
 			_drag_started_inside = false
-			_stick.position = _stick_start_position
+			_dynamic_active = false
+			_touch_index = -1
+
+			_stick.position = _stick.relative_position
+
+			if visibility_mode == VisibilityMode.VISIBILITY_WHEN_TOUCHED:
+				_visible_runtime = false
+
 			queue_redraw()
 
 	elif event is InputEventScreenDrag:
+		if event.index != _touch_index:
+			return
 		if _drag_started_inside:
 			_update_stick(event.position)
 
@@ -272,22 +378,63 @@ func _get_configuration_warnings() -> PackedStringArray:
 		_warnings.append("The joystick_texture properties must be set when using joystick_use_textures = true.")
 	if stick_use_textures and (stick_texture == null):
 		_warnings.append("The stick_texture properties must be set when using stick_use_textures = true.")
-	if joystick_use_textures and joystick_texture != null and joystick_preset_texture != _preset_enum.NONE and joystick_border > 1.0:
+	if joystick_use_textures and joystick_texture != null and joystick_preset_texture != Preset.NONE and joystick_border > 1.0:
 		_warnings.append("When using a texture preset, the ideal border height would be 1.0.")
 	return _warnings
-	
-#endregion Engine Methods =============================================
 
 
-#region Private Methods ============================================
-func _update_stick(_position: Vector2) -> void:
-	_delta = _position - _stick_start_position
-	if _delta.length() > _joystick.radius:
-		_delta = _delta.normalized() * _joystick.radius
-	_stick.position = _stick_start_position + _delta
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_update_base_from_relative()
+		_update_real_size()
+
+
+func _update_base_from_relative() -> void:
+	if not is_inside_tree():
+		return
+
+	var half = Vector2(
+		_joystick.radius * scale_factor + _joystick_border_width,
+		_joystick.radius * scale_factor + _joystick_border_width
+	)
+
+	# Área útil (onde o centro pode ficar)
+	var usable_size = size - half * 2.0
+	usable_size.x = max(0.0, usable_size.x)
+	usable_size.y = max(0.0, usable_size.y)
+
+	# Normalizado → espaço local
+	var pos = half + usable_size * relative_position
+
+	_relative_position = pos
+
+	if is_instance_valid(_joystick):
+		_joystick.relative_position = pos
+		_joystick.position = pos
+
+	if is_instance_valid(_stick):
+		_stick.relative_position = pos
+		_stick.position = pos
+
 	queue_redraw()
 
-	var processed = _apply_deadzone(_delta / _joystick.radius)
+
+func _update_stick(_position: Vector2) -> void:
+	_delta = _position - _stick.relative_position
+	var max_radius = _joystick.radius * _joystick.scale
+
+	if _delta.length() > max_radius:
+		if joystick_mode == JoystickMode.FOLLOW:
+			var excess = _delta.normalized() * (_delta.length() - max_radius)
+			_set_base_position(_joystick.relative_position + excess)
+			_delta = _position - _stick.relative_position
+
+		_delta = _delta.normalized() * max_radius
+
+	_stick.position = _stick.relative_position + _delta
+	queue_redraw()
+
+	var processed = _apply_deadzone(_delta / max_radius)
 	value = processed.value
 	distance = processed.distance
 	angle_degrees = processed.angle_degrees
@@ -304,17 +451,16 @@ func _reset_values() -> void:
 	angle_degrees = 0.0
 	angle_degrees_clockwise = 0.0
 	angle_degrees_not_clockwise = 0.0
-	_stick.position = _stick_start_position
-	
-	var length = (_delta / _joystick.radius).length()
+	_stick.position = _stick.relative_position
+
+	var length = (_delta / (_joystick.radius * _joystick.scale)).length()
 	var dz = clamp(deadzone, 0.0, 0.99)
 	if length <= dz:
 		_in_deadzone = true
-		
+
 	queue_redraw()
 
 
-## Applies linear deadzone adjustment and calculates resulting angles.
 func _apply_deadzone(input_value: Vector2) -> Dictionary:
 	var length = input_value.length()
 	var result = Vector2.ZERO
@@ -326,15 +472,14 @@ func _apply_deadzone(input_value: Vector2) -> Dictionary:
 		length = 0.0
 	else:
 		_in_deadzone = false
-		# Re-scale linearly between deadzone and full range
 		var adjusted = (length - dz) / (1.0 - dz)
 		result = input_value.normalized() * adjusted
 		length = adjusted
 
-	var angle_cw = _get_angle_delta(result * _joystick.radius, true, true)
-	var angle_ccw = _get_angle_delta(result * _joystick.radius, true, false)
-	var angle = _get_angle_delta(result * _joystick.radius, false, false)
-	
+	var angle_cw = _get_angle_delta(result * _joystick.radius * _joystick.scale, true, true)
+	var angle_ccw = _get_angle_delta(result * _joystick.radius * _joystick.scale, true, false)
+	var angle = _get_angle_delta(result * _joystick.radius * _joystick.scale, false, false)
+
 	if active:
 		return {
 			"value": result,
@@ -377,9 +522,8 @@ func _update_emit_signals() -> void:
 func _update_real_size() -> void:
 	_real_size = size * scale
 	pivot_offset = size / 2
-	
-	
-## Calculates the angle of a vector in degrees.
+
+
 func _get_angle_delta(delta: Vector2, continuous: bool, clockwise: bool) -> float:
 	var angle_deg = 0.0
 	if continuous and not clockwise:
@@ -391,43 +535,44 @@ func _get_angle_delta(delta: Vector2, continuous: bool, clockwise: bool) -> floa
 	return angle_deg
 
 
-func _set_joystick_preset(_value: _preset_enum) -> void:
+func _set_joystick_preset(_value: Preset) -> void:
 	joystick_preset_texture = _value
 	match (_value):
-		_preset_enum.PRESET_DEFAULT:
+		Preset.PRESET_DEFAULT:
 			joystick_texture = _DEFAULT_JOYSTICK_TEXTURE
-		_preset_enum.PRESET_2:
+		Preset.PRESET_2:
 			joystick_texture = _JOYSTICK_TEXTURE_2
-		_preset_enum.PRESET_3:
+		Preset.PRESET_3:
 			joystick_texture = _JOYSTICK_TEXTURE_3
-		_preset_enum.PRESET_4:
+		Preset.PRESET_4:
 			joystick_texture = _JOYSTICK_TEXTURE_4
-		_preset_enum.PRESET_5:
+		Preset.PRESET_5:
 			joystick_texture = _JOYSTICK_TEXTURE_5
-		_preset_enum.PRESET_6:
+		Preset.PRESET_6:
 			joystick_texture = _JOYSTICK_TEXTURE_6
-		_preset_enum.NONE:
+		Preset.NONE:
 			if joystick_texture in [_DEFAULT_JOYSTICK_TEXTURE, _JOYSTICK_TEXTURE_2, _JOYSTICK_TEXTURE_3, _JOYSTICK_TEXTURE_4, _JOYSTICK_TEXTURE_5, _JOYSTICK_TEXTURE_6]:
 				joystick_texture = null
 	_verify_can_use_border()
 	update_configuration_warnings()
-				
-func _set_stick_preset(_value: _preset_enum) -> void:
+
+
+func _set_stick_preset(_value: Preset) -> void:
 	stick_preset_texture = _value
 	match (_value):
-		_preset_enum.PRESET_DEFAULT:
+		Preset.PRESET_DEFAULT:
 			stick_texture = _DEFAULT_STICK_TEXTURE
-		_preset_enum.PRESET_2:
+		Preset.PRESET_2:
 			stick_texture = _STICK_TEXTURE_2
-		_preset_enum.PRESET_3:
+		Preset.PRESET_3:
 			stick_texture = _STICK_TEXTURE_3
-		_preset_enum.PRESET_4:
+		Preset.PRESET_4:
 			stick_texture = _STICK_TEXTURE_4
-		_preset_enum.PRESET_5:
+		Preset.PRESET_5:
 			stick_texture = _STICK_TEXTURE_5
-		_preset_enum.PRESET_6:
+		Preset.PRESET_6:
 			stick_texture = _STICK_TEXTURE_6
-		_preset_enum.NONE:
+		Preset.NONE:
 			if stick_texture in [_DEFAULT_STICK_TEXTURE, _STICK_TEXTURE_2, _STICK_TEXTURE_3, _STICK_TEXTURE_4, _STICK_TEXTURE_5, _STICK_TEXTURE_6]:
 				stick_texture = null
 
@@ -437,10 +582,23 @@ func _verify_can_use_border() -> bool:
 		joystick_border = 1.0
 		return false
 	return true
-#endregion Private Methods ===========================================
 
 
-#region Public Methods =============================================
+func _set_base_position(pos: Vector2) -> void:
+	var half = Vector2(
+		_joystick.radius * scale_factor + _joystick_border_width,
+		_joystick.radius * scale_factor + _joystick_border_width
+	)
+
+	var clamped = pos.clamp(half, size - half)
+
+	_relative_position = clamped
+	_joystick.relative_position = clamped
+	_joystick.position = clamped
+	_stick.relative_position = clamped
+	_stick.position = clamped
+
+
 ## Returns the current joystick vector value.
 func get_value() -> Vector2:
 	return value
@@ -464,12 +622,12 @@ func get_angle_degrees_not_clockwise() -> float:
 ## Returns a specific angle configuration.
 func get_angle_degrees(continuous: bool = true, clockwise: bool = false) -> float:
 	return _get_angle_delta(_delta, continuous, clockwise)
-#endregion Public Methods ============================================
 
 
-#region Classes ====================================================
 class VirtualJoystickCircle extends RefCounted:
-	var position: Vector2
+	var position: Vector2:
+		get():
+			return position
 	var radius: float
 	var color: Color
 	var width: float
@@ -479,8 +637,10 @@ class VirtualJoystickCircle extends RefCounted:
 		set(value):
 			opacity = value
 			self.color.a = opacity
+	var relative_position: Vector2
+	var scale: float = 1.0
 
-	func _init(_position: Vector2, _radius: float, _width: float = -1.0, _filled: bool = true, _color: Color = Color.WHITE, _opacity: float = 1.0, _antialiased: bool = true):
+	func _init(_position: Vector2, _relative_position: Vector2, _scale: float, _radius: float, _width: float = -1.0, _filled: bool = true, _color: Color = Color.WHITE, _opacity: float = 1.0, _antialiased: bool = true):
 		self.position = _position
 		self.radius = _radius
 		self.color = _color
@@ -489,8 +649,8 @@ class VirtualJoystickCircle extends RefCounted:
 		self.antialiased = _antialiased
 		self.opacity = _opacity
 		self.color.a = _opacity
+		self.relative_position = _relative_position
+		self.scale = _scale
 
-	func draw(canvas_item: CanvasItem, offset: bool) -> void:
-		var pos = self.position + (Vector2(self.radius, self.radius) if offset else Vector2.ZERO)
-		canvas_item.draw_circle(pos, self.radius, self.color, self.filled, self.width, self.antialiased)
-#endregion Classes ===================================================
+	func draw(canvas_item: CanvasItem) -> void:
+		canvas_item.draw_circle(self.position, self.radius * self.scale, self.color, self.filled, self.width, self.antialiased)
