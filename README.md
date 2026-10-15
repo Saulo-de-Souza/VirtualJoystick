@@ -75,6 +75,7 @@ func _physics_process(delta: float) -> void:
 | `joystick_mode`     | `JoystickMode`   | Defines how the joystick behaves (NORMAL, DYNAMIC, FOLLOW).  |
 | `visibility_mode`   | `VisibilityMode` | Controls when the joystick is visible.                       |
 | `deadzone`          | `float`          | Linear deadzone threshold (0.0 – 0.9).                       |
+| `sensitivity`       | `float`          | Controls the response curve applied to the stick magnitude.  |
 | `scale_factor`      | `float`          | Global scale multiplier for joystick size.                   |
 | `only_mobile`       | `bool`           | Shows the joystick only on mobile platforms.                 |
 | `relative_position` | `Vector2`        | Normalized base position (0–1) relative to the Control size. |

@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/virtual_joystick_plus/icon.svg")
+@icon("./icon.svg")
 
 ## A virtual on-screen joystick used to provide analog movement input on touch-based devices.
 class_name VirtualJoystickPlus
@@ -54,19 +54,19 @@ var _dynamic_active: bool = false
 var _visible_runtime: bool = true
 
 
-var _DEFAULT_JOYSTICK_TEXTURE = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_1.png")
-var _JOYSTICK_TEXTURE_2 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_2.png")
-var _JOYSTICK_TEXTURE_3 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_3.png")
-var _JOYSTICK_TEXTURE_4 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_4.png")
-var _JOYSTICK_TEXTURE_5 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_5.png")
-var _JOYSTICK_TEXTURE_6 = preload("res://addons/virtual_joystick_plus/resources/textures/joystick_texture_6.png")
+var _DEFAULT_JOYSTICK_TEXTURE = preload("./resources/textures/joystick_texture_1.png")
+var _JOYSTICK_TEXTURE_2 = preload("./resources/textures/joystick_texture_2.png")
+var _JOYSTICK_TEXTURE_3 = preload("./resources/textures/joystick_texture_3.png")
+var _JOYSTICK_TEXTURE_4 = preload("./resources/textures/joystick_texture_4.png")
+var _JOYSTICK_TEXTURE_5 = preload("./resources/textures/joystick_texture_5.png")
+var _JOYSTICK_TEXTURE_6 = preload("./resources/textures/joystick_texture_6.png")
 
-var _DEFAULT_STICK_TEXTURE = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_1.png")
-var _STICK_TEXTURE_2 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_2.png")
-var _STICK_TEXTURE_3 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_3.png")
-var _STICK_TEXTURE_4 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_4.png")
-var _STICK_TEXTURE_5 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_5.png")
-var _STICK_TEXTURE_6 = preload("res://addons/virtual_joystick_plus/resources/textures/stick_texture_6.png")
+var _DEFAULT_STICK_TEXTURE = preload("./resources/textures/stick_texture_1.png")
+var _STICK_TEXTURE_2 = preload("./resources/textures/stick_texture_2.png")
+var _STICK_TEXTURE_3 = preload("./resources/textures/stick_texture_3.png")
+var _STICK_TEXTURE_4 = preload("./resources/textures/stick_texture_4.png")
+var _STICK_TEXTURE_5 = preload("./resources/textures/stick_texture_5.png")
+var _STICK_TEXTURE_6 = preload("./resources/textures/stick_texture_6.png")
 
 enum Preset {
 	## Nothing
@@ -153,8 +153,13 @@ var angle_degrees_not_clockwise: float = 0.0
 				_visible_runtime = true
 			queue_redraw()
 		
+## Controls the response curve applied to the stick magnitude.
+## Values above 1 make the center less sensitive; values below 1 make it more sensitive.
+@export_exp_easing("positive_only") var sensitivity: float = 2.0
+
 ## Deadzone threshold (0.0 = off, 1.0 = full range).
 @export_range(0.0, 0.9, 0.001, "suffix:length") var deadzone: float = 0.1
+
 ## Global scale factor of the joystick.
 @export_range(0.1, 2.0, 0.001, "suffix:x", "or_greater") var scale_factor: float = 1.0:
 	set(value):
@@ -163,6 +168,7 @@ var angle_degrees_not_clockwise: float = 0.0
 		_stick.scale = scale_factor
 		_update_real_size()
 		queue_redraw()
+		
 ## If true, the Joystick will only be displayed on the screen on mobile devices.
 @export var only_mobile: bool = false:
 	set(value):
@@ -303,7 +309,7 @@ func _draw() -> void:
 		draw_texture(joystick_texture, -base_size / 2, Color(joystick_color.r, joystick_color.g, joystick_color.b, joystick_opacity))
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
-		_joystick.draw(self )
+		_joystick.draw(self)
 
 	if stick_use_textures and stick_texture:
 		var stick_size = stick_texture.get_size()
@@ -312,7 +318,7 @@ func _draw() -> void:
 		draw_texture(stick_texture, -stick_size / 2, Color(stick_color.r, stick_color.g, stick_color.b, stick_opacity))
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
-		_stick.draw(self )
+		_stick.draw(self)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -434,12 +440,15 @@ func _update_stick(_position: Vector2) -> void:
 	_stick.position = _stick.relative_position + _delta
 	queue_redraw()
 
-	var processed = _apply_deadzone(_delta / max_radius)
-	value = processed.value
-	distance = processed.distance
-	angle_degrees = processed.angle_degrees
-	angle_degrees_clockwise = processed.angle_clockwise
-	angle_degrees_not_clockwise = processed.angle_not_clockwise
+	var input_value = _delta / max_radius
+	value = VirtualJoystickPlusUtils.process_stick(input_value, deadzone, sensitivity)
+	_in_deadzone = input_value.length() <= clampf(deadzone, 0.0, 1.0)
+	distance = value.length()
+
+	var processed_delta = value * max_radius
+	angle_degrees = _get_angle_delta(processed_delta, false, false)
+	angle_degrees_clockwise = _get_angle_delta(processed_delta, true, true)
+	angle_degrees_not_clockwise = _get_angle_delta(processed_delta, true, false)
 
 	_update_emit_signals()
 
@@ -452,50 +461,9 @@ func _reset_values() -> void:
 	angle_degrees_clockwise = 0.0
 	angle_degrees_not_clockwise = 0.0
 	_stick.position = _stick.relative_position
-
-	var length = (_delta / (_joystick.radius * _joystick.scale)).length()
-	var dz = clamp(deadzone, 0.0, 0.99)
-	if length <= dz:
-		_in_deadzone = true
+	_in_deadzone = true
 
 	queue_redraw()
-
-
-func _apply_deadzone(input_value: Vector2) -> Dictionary:
-	var length = input_value.length()
-	var result = Vector2.ZERO
-	var dz = clamp(deadzone, 0.0, 0.99)
-
-	if length <= dz:
-		_in_deadzone = true
-		result = Vector2.ZERO
-		length = 0.0
-	else:
-		_in_deadzone = false
-		var adjusted = (length - dz) / (1.0 - dz)
-		result = input_value.normalized() * adjusted
-		length = adjusted
-
-	var angle_cw = _get_angle_delta(result * _joystick.radius * _joystick.scale, true, true)
-	var angle_ccw = _get_angle_delta(result * _joystick.radius * _joystick.scale, true, false)
-	var angle = _get_angle_delta(result * _joystick.radius * _joystick.scale, false, false)
-
-	if active:
-		return {
-			"value": result,
-			"distance": length,
-			"angle_clockwise": angle_cw,
-			"angle_not_clockwise": angle_ccw,
-			"angle_degrees": angle
-		}
-	else:
-		return {
-			"value": Vector2.ZERO,
-			"distance": 0.0,
-			"angle_clockwise": 0.0,
-			"angle_not_clockwise": 0.0,
-			"angle_degrees": 0.0
-		}
 
 
 func _update_emit_signals() -> void:
@@ -621,7 +589,7 @@ func get_angle_degrees_not_clockwise() -> float:
 
 ## Returns a specific angle configuration.
 func get_angle_degrees(continuous: bool = true, clockwise: bool = false) -> float:
-	return _get_angle_delta(_delta, continuous, clockwise)
+	return _get_angle_delta(value * _joystick.radius * _joystick.scale, continuous, clockwise)
 
 
 class VirtualJoystickCircle extends RefCounted:
@@ -654,3 +622,180 @@ class VirtualJoystickCircle extends RefCounted:
 
 	func draw(canvas_item: CanvasItem) -> void:
 		canvas_item.draw_circle(self.position, self.radius * self.scale, self.color, self.filled, self.width, self.antialiased)
+
+
+#region UTILS
+@abstract class VirtualJoystickPlusUtils extends RefCounted:
+	## Returns the node's forward direction based on its local Z axis.
+	## By default, the Y component is ignored.
+	static func get_forward(node: Node3D, normalized: bool = false, ignore_y: bool = true) -> Vector3:
+		var forward: Vector3 = node.global_transform.basis.z
+
+		if ignore_y:
+			forward.y = 0.0
+
+		if normalized:
+			return forward.normalized()
+
+		return forward
+
+
+	## Returns the node's right direction based on its local X axis.
+	## By default, the Y component is ignored.
+	static func get_right(node: Node3D, normalized: bool = false, ignore_y: bool = true) -> Vector3:
+		var right: Vector3 = node.global_transform.basis.x
+
+		if ignore_y:
+			right.y = 0.0
+
+		if normalized:
+			return right.normalized()
+
+		return right
+
+
+	## Processes a bipolar axis in the [-1, 1] range.
+	## Applies deadzone, sensitivity and an optional threshold.
+	static func process_axis(value: float, deadzone: float = 0.0, sensitivity: float = 1.0, use_threshold: bool = false, threshold: float = 0.0) -> float:
+		value = clampf(value, -1.0, 1.0)
+		value = _apply_deadzone(value, deadzone)
+		value = _apply_sensitivity(value, sensitivity)
+
+		if use_threshold:
+			value = _apply_threshold(value, threshold)
+
+		return value
+
+
+	## Processes a unipolar input in the [0, 1] range.
+	## Applies deadzone, sensitivity and an optional threshold.
+	static func process_trigger(value: float, deadzone: float = 0.0, sensitivity: float = 1.0, use_threshold: bool = false, threshold: float = 0.0) -> float:
+		value = clampf(value, 0.0, 1.0)
+		value = _apply_deadzone_positive(value, deadzone)
+		value = _apply_sensitivity_positive(value, sensitivity)
+
+		if use_threshold:
+			value = _apply_threshold_positive(value, threshold)
+
+		return value
+
+
+	## Processes a Vector2 using a radial deadzone.
+	## The deadzone is circular and applies to the stick's magnitude.
+	## Sensitivity changes the magnitude while preserving direction.
+	static func process_stick(value: Vector2, deadzone: float = 0.0, sensitivity: float = 1.0) -> Vector2:
+		value = value.limit_length(1.0)
+		value = _apply_deadzone_radial(value, deadzone)
+		value = _apply_sensitivity_radial(value, sensitivity)
+
+		return value
+
+
+	## Processes a Vector2 using independent X/Y deadzones.
+	## Each axis can have its own deadzone value.
+	## Sensitivity is applied to the resulting vector magnitude.
+	static func process_stick_axes(value: Vector2, deadzone_x: float = 0.0, deadzone_y: float = 0.0, sensitivity: float = 1.0) -> Vector2:
+		value = value.limit_length(1.0)
+
+		value.x = _apply_deadzone(value.x, deadzone_x)
+		value.y = _apply_deadzone(value.y, deadzone_y)
+
+		value = _apply_sensitivity_radial(value, sensitivity)
+
+		return value
+
+
+	## Applies a symmetrical deadzone to a bipolar value in the [-1, 1] range.
+	## Values inside the deadzone become zero.
+	## Values outside it are remapped to preserve the full output range.
+	static func _apply_deadzone(value: float, deadzone: float) -> float:
+		deadzone = clampf(deadzone, 0.0, 1.0)
+
+		var absolute_value := absf(value)
+
+		if absolute_value <= deadzone:
+			return 0.0
+
+		var corrected_value := (
+			absolute_value - deadzone
+		) / (1.0 - deadzone)
+
+		return signf(value) * corrected_value
+
+
+	## Applies a deadzone to a positive value in the [0, 1] range.
+	static func _apply_deadzone_positive(value: float, deadzone: float) -> float:
+		deadzone = clampf(deadzone, 0.0, 1.0)
+
+		if value <= deadzone:
+			return 0.0
+
+		return (value - deadzone) / (1.0 - deadzone)
+
+
+	## Applies a radial deadzone to a Vector2.
+	## The deadzone is based on the vector's magnitude.
+	static func _apply_deadzone_radial(value: Vector2, deadzone: float) -> Vector2:
+		deadzone = clampf(deadzone, 0.0, 1.0)
+
+		var length := value.length()
+
+		if length <= deadzone:
+			return Vector2.ZERO
+
+		var corrected_length := (
+			length - deadzone
+		) / (1.0 - deadzone)
+
+		return value.normalized() * corrected_length
+
+
+	## Applies sensitivity to a bipolar value in the [-1, 1] range.
+	## A sensitivity greater than 1 makes the center less sensitive.
+	## A sensitivity smaller than 1 makes the center more sensitive.
+	static func _apply_sensitivity(value: float, sensitivity: float) -> float:
+		return signf(value) * pow(absf(value), sensitivity)
+
+
+	## Applies sensitivity to a positive value in the [0, 1] range.
+	static func _apply_sensitivity_positive(value: float, sensitivity: float) -> float:
+		return pow(value, sensitivity)
+
+
+	## Applies sensitivity to the magnitude of a Vector2.
+	## The vector's direction is preserved.
+	static func _apply_sensitivity_radial(value: Vector2, sensitivity: float) -> Vector2:
+		var length := value.length()
+
+		if is_zero_approx(length):
+			return Vector2.ZERO
+
+		var corrected_length := pow(length, sensitivity)
+
+		return value.normalized() * corrected_length
+
+
+	## Converts a bipolar value into a digital-style result.
+	## Values below the threshold become zero.
+	## Values at or above it become -1 or 1.
+	static func _apply_threshold(value: float, threshold: float) -> float:
+		threshold = clampf(threshold, 0.0, 1.0)
+
+		if absf(value) < threshold:
+			return 0.0
+
+		return signf(value)
+
+
+	## Converts a positive value into a digital-style result.
+	## Values below the threshold become zero.
+	## Values at or above it become 1.
+	static func _apply_threshold_positive(value: float, threshold: float) -> float:
+		threshold = clampf(threshold, 0.0, 1.0)
+
+		if value < threshold:
+			return 0.0
+
+		return 1.0
+
+#endregion
